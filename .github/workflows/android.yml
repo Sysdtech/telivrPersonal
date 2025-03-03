@@ -24,6 +24,19 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Decode and save keystore
+        run: |
+          echo "$SIGNING_KEY" | base64 --decode > android/app/my-release-key.jks
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+
+      - name: Set up signing properties
+        run: |
+          echo "KEYSTORE_FILE=android/app/my-release-key.jks" >> gradle.properties
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }}" >> gradle.properties
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> gradle.properties
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> gradle.properties
+
       - name: Find gradlew
         id: find-gradlew
         run: |
