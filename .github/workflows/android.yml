@@ -36,8 +36,9 @@ jobs:
             echo "gradlew_path=android" >> $GITHUB_OUTPUT
           else
             echo "Searching in subdirectories..."
-            GRADLEW_PATH=$(find . -name "gradlew" -type f | head -n 1 | xargs dirname)
-            if [ -n "$GRADLEW_PATH" ]; then
+            FILE=$(find . -name "gradlew" -type f | head -n 1)
+            if [ -n "$FILE" ]; then
+              GRADLEW_PATH=$(dirname "$FILE")
               echo "Found in $GRADLEW_PATH"
               echo "gradlew_path=$GRADLEW_PATH" >> $GITHUB_OUTPUT
             else
