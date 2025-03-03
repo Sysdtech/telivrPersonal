@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -26,14 +26,15 @@ jobs:
 
       - name: Decode and save keystore
         run: |
+          # Se decodifica el keystore y se guarda en android/app/my-release-key.jks
           echo "$SIGNING_KEY" | base64 --decode > android/app/my-release-key.jks
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
 
       - name: Set up signing properties
         run: |
-          # Como el build.gradle de la app (en android/app) usará file(KEYSTORE_FILE),
-          # definimos la propiedad sin el prefijo "app/", ya que la ruta relativa será a "android/app"
+          # En este caso KEYSTORE_FILE se define sin prefijo, ya que el build.gradle en android/app
+          # usará file(KEYSTORE_FILE) para buscar el archivo en el directorio actual (android/app)
           echo "KEYSTORE_FILE=my-release-key.jks" >> android/gradle.properties
           echo "KEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }}" >> android/gradle.properties
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/gradle.properties
@@ -58,7 +59,7 @@ jobs:
           if [ -n "$APK_PATH" ]; then
             echo "Found APK at $APK_PATH"
             APK_DIR=$(dirname "$APK_PATH")
-            # Quitar "./" si existe
+            # Remover "./" si está presente
             APK_DIR=${APK_DIR#./}
             echo "apk_dir=$APK_DIR" >> $GITHUB_OUTPUT
           else
@@ -76,13 +77,13 @@ jobs:
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: TelefoniaPersonal
           path: ${{ steps.sign_app.outputs.signedReleaseFile }}
 
-      - name: Create Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
