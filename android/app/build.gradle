@@ -12,20 +12,19 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         release {
-            // Variables definidas en gradle.properties o en variables de entorno
+            // Si se proporcionan las variables, se usa el keystore de release
             if (project.hasProperty('KEYSTORE_FILE')) {
                 storeFile file(KEYSTORE_FILE)
                 storePassword KEYSTORE_PASSWORD
                 keyAlias KEY_ALIAS
                 keyPassword KEY_PASSWORD
             } else {
-                // Si no hay configuración de firma, usamos valores predeterminados para debug
+                // Para entornos locales, podrías usar debug.keystore o evitar la firma
                 storeFile file('debug.keystore')
                 storePassword 'android'
                 keyAlias 'androiddebugkey'
