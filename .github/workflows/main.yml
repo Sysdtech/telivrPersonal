@@ -24,19 +24,59 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Find gradlew
+        id: find-gradlew
+        run: |
+          echo "Searching for gradlew..."
+          if [ -f "gradlew" ]; then
+            echo "Found in root directory"
+            echo "gradlew_path=." >> $GITHUB_OUTPUT
+          elif [ -f "android/gradlew" ]; then
+            echo "Found in android directory"
+            echo "gradlew_path=android" >> $GITHUB_OUTPUT
+          else
+            echo "Searching in subdirectories..."
+            GRADLEW_PATH=$(find . -name "gradlew" -type f | head -n 1 | xargs dirname)
+            if [ -n "$GRADLEW_PATH" ]; then
+              echo "Found in $GRADLEW_PATH"
+              echo "gradlew_path=$GRADLEW_PATH" >> $GITHUB_OUTPUT
+            else
+              echo "gradlew not found. Creating one in the android directory..."
+              mkdir -p android
+              cd android
+              echo "Initializing gradle wrapper..."
+              gradle wrapper
+              cd ..
+              echo "gradlew_path=android" >> $GITHUB_OUTPUT
+            fi
+          fi
+
       - name: Grant execute permission for gradlew
-        run: chmod +x android/gradlew
+        run: chmod +x ${{ steps.find-gradlew.outputs.gradlew_path }}/gradlew
 
       - name: Build with Gradle
         run: |
-          cd android
+          cd ${{ steps.find-gradlew.outputs.gradlew_path }}
           ./gradlew assembleRelease
+
+      - name: Find APK
+        id: find-apk
+        run: |
+          APK_PATH=$(find . -path "*/build/outputs/apk/release/*.apk" | head -n 1)
+          if [ -n "$APK_PATH" ]; then
+            echo "Found APK at $APK_PATH"
+            APK_DIR=$(dirname "$APK_PATH")
+            echo "apk_dir=$APK_DIR" >> $GITHUB_OUTPUT
+          else
+            echo "No APK found"
+            exit 1
+          fi
 
       - name: Sign APK
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
-          releaseDirectory: android/app/build/outputs/apk/release
+          releaseDirectory: ${{ steps.find-apk.outputs.apk_dir }}
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
