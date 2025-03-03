@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Telefonía Personal</string>
+    <string name="app_logo">Logo de la aplicación</string>
+    
+    <!-- Pantalla de emparejamiento -->
+    <string name="server_url">URL del servidor</string>
+    <string name="pairing_code">Código de emparejamiento</string>
+    <string name="pair_device">Emparejar dispositivo</string>
+    <string name="pairing_instructions">Para emparejar este dispositivo, ingrese la URL del servidor y el código de emparejamiento generado desde el panel web.</string>
+    
+    <!-- Pantalla de estado -->
+    <string name="connection_status">Estado de la conexión</string>
+    <string name="connected">Conectado al servidor</string>
+    <string name="connecting">Conectando…</string>
+    <string name="disconnected">Desconectado</string>
+    <string name="connection_error">Error de conexión</string>
+    <string name="connect">Conectar</string>
+    <string name="disconnect">Desconectar</string>
+    <string name="retry">Reintentar</string>
+    <string name="settings">Configuración</string>
+    <string name="keep_running_tip">Esta aplicación debe mantenerse en ejecución para recibir llamadas. Se recomienda desactivar la optimización de batería para esta aplicación.</string>
+    
+    <!-- Configuraciones -->
+    <string name="server_settings">Configuración del servidor</string>
+    <string name="unpair_device">Borrar datos de emparejamiento</string>
+    <string name="battery_optimization">Optimización de batería</string>
+    <string name="notification_settings">Configuración de notificaciones</string>
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    
+    <!-- Diálogos -->
+    <string name="unpair_confirmation">¿Está seguro que desea borrar todos los datos de emparejamiento? Esto desconectará el dispositivo del sistema.</string>
+    <string name="permissions_required">Esta aplicación necesita permisos para funcionar correctamente. Por favor, conceda todos los permisos solicitados.</string>
+    <string name="go_to_settings">Configuración</string>
+    
+    <!-- Notificaciones -->
+    <string name="foreground_service_notification_title">Servicio de telefonía activo</string>
+    <string name="foreground_service_notification_text">La aplicación está monitoreando llamadas</string>
+    <string name="incoming_call_notification_title">Llamada entrante</string>
+    <string name="outgoing_call_notification_title">Llamada saliente</string>
+    
+    <!-- Estado de las llamadas -->
+    <string name="call_ended">Llamada finalizada</string>
+    <string name="call_connected">Llamada conectada</string>
+    <string name="call_on_hold">Llamada en espera</string>
+    <string name="calling">Llamando…</string>
+</resources>
