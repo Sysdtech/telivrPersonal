@@ -32,7 +32,9 @@ jobs:
 
       - name: Set up signing properties
         run: |
-          echo "KEYSTORE_FILE=android/app/my-release-key.jks" >> gradle.properties
+          # Debido a que ejecutamos gradlew dentro de la carpeta "android",
+          # la ruta al keystore debe ser relativa a esa carpeta.
+          echo "KEYSTORE_FILE=app/my-release-key.jks" >> gradle.properties
           echo "KEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }}" >> gradle.properties
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> gradle.properties
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> gradle.properties
@@ -71,7 +73,7 @@ jobs:
       - name: Build with Gradle
         run: |
           cd ${{ steps.find-gradlew.outputs.gradlew_path }}
-          ./gradlew assembleRelease -PKEYSTORE_FILE=android/app/my-release-key.jks -PKEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }} -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
+          ./gradlew assembleRelease -PKEYSTORE_FILE=app/my-release-key.jks -PKEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }} -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
 
       - name: Find APK
         id: find-apk
