@@ -32,19 +32,20 @@ jobs:
 
       - name: Set up signing properties
         run: |
-          # Dado que el build se ejecuta en la carpeta "android", la ruta es relativa a ella.
-          echo "KEYSTORE_FILE=app/my-release-key.jks" >> android/gradle.properties
+          # Como el build.gradle de la app (en android/app) usará file(KEYSTORE_FILE),
+          # definimos la propiedad sin el prefijo "app/", ya que la ruta relativa será a "android/app"
+          echo "KEYSTORE_FILE=my-release-key.jks" >> android/gradle.properties
           echo "KEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }}" >> android/gradle.properties
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/gradle.properties
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/gradle.properties
 
       - name: Clear Gradle Wrapper cache
-        run: rm -rf ~/.gradle/wrapper/dists/gradle-8.1.0-bin
+        run: rm -rf ~/.gradle/wrapper/dists/gradle-8.1.1-bin
 
       - name: Build with Gradle
         run: |
           cd android
-          ./gradlew assembleRelease -PKEYSTORE_FILE=app/my-release-key.jks \
+          ./gradlew assembleRelease -PKEYSTORE_FILE=my-release-key.jks \
             -PKEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }} \
             -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} \
             -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
@@ -57,7 +58,7 @@ jobs:
           if [ -n "$APK_PATH" ]; then
             echo "Found APK at $APK_PATH"
             APK_DIR=$(dirname "$APK_PATH")
-            # Quitar ./ si está presente
+            # Quitar "./" si existe
             APK_DIR=${APK_DIR#./}
             echo "apk_dir=$APK_DIR" >> $GITHUB_OUTPUT
           else
