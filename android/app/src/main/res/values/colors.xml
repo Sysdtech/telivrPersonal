@@ -16,7 +16,6 @@
 
     <color name="hint_text">#FF888888</color>
     <color name="text_dark">#FF000000</color>
-    <color name="error_red">#FFFF0000</color>
     
     <color name="status_online">#4CAF50</color>
     <color name="status_offline">#9E9E9E</color>
