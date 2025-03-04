@@ -7,12 +7,12 @@ plugins {
 android {
     // Define el namespace (usado en Android Studio 4.2+)
     namespace "com.franco.myapp" // Cambia según tu applicationId
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.franco.myapp" // Debe coincidir con tu namespace
         minSdk 21
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
