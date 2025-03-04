@@ -1,65 +1,32 @@
-import android.os.Build;
-import android.provider.Settings;
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.os.BatteryManager;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
 
-// Actualiza la importación de BuildConfig al package correcto, por ejemplo:
-import com.franco.myapp.BuildConfig;
+android {
+    compileSdk 33
 
-public class DeviceInfoHelper {
-    
-    /**
-     * Recolecta información del dispositivo usando el contexto proporcionado.
-     *
-     * @param context El contexto de la aplicación o actividad.
-     * @return Un objeto DeviceInfo con la información recolectada.
-     */
-    public DeviceInfo collectDeviceInfo(Context context) {
-        DeviceInfo info = new DeviceInfo();
-        
-        info.manufacturer = Build.MANUFACTURER;
-        info.model = Build.MODEL;
-        info.osVersion = Build.VERSION.RELEASE;
-        info.appVersion = BuildConfig.VERSION_NAME; // Ahora se importa desde el package correcto
-        info.deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-        
-        BatteryManager batteryManager = (BatteryManager) context.getSystemService(Context.BATTERY_SERVICE);
-        if (batteryManager != null) {
-            IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-            Intent batteryStatus = context.registerReceiver(null, ifilter);
-            if (batteryStatus != null) {
-                int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-                info.isCharging = (status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                                   status == BatteryManager.BATTERY_STATUS_FULL);
-            }
-        }
-        
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm != null) {
-            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-            if (activeNetwork != null) {
-                if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
-                    WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                    if (wifiManager != null) {
-                        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-                        info.signalStrength = WifiManager.calculateSignalLevel(wifiInfo.getRssi(), 5);
-                    }
-                }
-            }
-        }
-        
-        PackageManager pm = context.getPackageManager();
-        info.hasCamera = pm.hasSystemFeature(PackageManager.FEATURE_CAMERA);
-        info.hasMicrophone = pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE);
-        info.hasSpeaker = pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
-        
-        return info;
+    defaultConfig {
+        applicationId "com.franc.myapp" // O el applicationId que estés usando
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    // Otras dependencias...
 }
