@@ -1,5 +1,3 @@
-package com.telefonia.personal;
-
 import android.os.Build;
 import android.provider.Settings;
 import android.content.Context;
