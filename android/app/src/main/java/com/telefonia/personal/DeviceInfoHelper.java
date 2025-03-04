@@ -12,17 +12,21 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 
-// Asegúrate de tener definida la clase DeviceInfo en algún lugar
-// Por ejemplo, podría estar en otro archivo:
-// public class DeviceInfo { ... }
+// Asegúrate de que BuildConfig se genere en este módulo (normalmente es automático)
+import com.telefonia.personal.BuildConfig;
 
 public class DeviceInfoHelper {
-    
-    // Si tu método requiere un contexto, decláralo como parámetro
+
+    /**
+     * Recolecta información del dispositivo usando el contexto proporcionado.
+     *
+     * @param context El contexto de la aplicación o actividad.
+     * @return Un objeto DeviceInfo con la información recolectada.
+     */
     public DeviceInfo collectDeviceInfo(Context context) {
         DeviceInfo info = new DeviceInfo();
         
-        // Ejemplo de asignación de propiedades:
+        // Asignar propiedades básicas
         info.manufacturer = Build.MANUFACTURER;
         info.model = Build.MODEL;
         info.osVersion = Build.VERSION.RELEASE;
@@ -34,12 +38,14 @@ public class DeviceInfoHelper {
         if (batteryManager != null) {
             IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
             Intent batteryStatus = context.registerReceiver(null, ifilter);
-            int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-            info.isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || 
-                              status == BatteryManager.BATTERY_STATUS_FULL;
+            if (batteryStatus != null) {
+                int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+                info.isCharging = (status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                                   status == BatteryManager.BATTERY_STATUS_FULL);
+            }
         }
         
-        // Obtener información de red (ejemplo)
+        // Obtener información de red (ejemplo para Wi-Fi)
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm != null) {
             NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
@@ -51,12 +57,12 @@ public class DeviceInfoHelper {
                         info.signalStrength = WifiManager.calculateSignalLevel(wifiInfo.getRssi(), 5);
                     }
                 } else if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
-                    // Aquí podrías agregar lógica para datos móviles
+                    // Aquí podrías agregar lógica para datos móviles si es necesario
                 }
             }
         }
         
-        // Información de características del dispositivo
+        // Obtener características del dispositivo
         PackageManager pm = context.getPackageManager();
         info.hasCamera = pm.hasSystemFeature(PackageManager.FEATURE_CAMERA);
         info.hasMicrophone = pm.hasSystemFeature(PackageManager.FEATURE_MICROPHONE);
