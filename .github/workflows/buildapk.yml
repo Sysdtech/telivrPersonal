@@ -24,6 +24,19 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Add missing dependencies
+        run: |
+          echo "Adding missing dependencies..."
+          cat <<EOT >> android/app/build.gradle
+
+          dependencies {
+              implementation 'com.google.code.gson:gson:2.8.9'
+              implementation 'com.karumi:dexter:6.2.3'
+              implementation 'org.java-websocket:Java-WebSocket:1.5.2'
+              implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+          }
+          EOT
+
       - name: Decode and save keystore
         run: |
           echo "$SIGNING_KEY" | base64 --decode > android/app/my-release-key.jks
@@ -32,11 +45,15 @@ jobs:
 
       - name: Set up signing properties
         run: |
-          # Como ejecutamos el build en la carpeta "android", la ruta al keystore es relativa a ella
           echo "KEYSTORE_FILE=app/my-release-key.jks" >> android/gradle.properties
           echo "KEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }}" >> android/gradle.properties
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/gradle.properties
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/gradle.properties
+
+      - name: Clean Gradle build
+        run: |
+          cd android
+          ./gradlew clean
 
       - name: Build with Gradle
         run: |
@@ -51,7 +68,6 @@ jobs:
           if [ -n "$APK_PATH" ]; then
             echo "Found APK at $APK_PATH"
             APK_DIR=$(dirname "$APK_PATH")
-            # Eliminar el prefijo "./" si lo tiene
             APK_DIR=${APK_DIR#./}
             echo "apk_dir=$APK_DIR" >> $GITHUB_OUTPUT
           else
@@ -63,7 +79,6 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
-          # La ruta de releaseDirectory se arma con la carpeta "android" y la ruta encontrada
           releaseDirectory: android/${{ steps.find-apk.outputs.apk_dir }}
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.KEY_ALIAS }}
