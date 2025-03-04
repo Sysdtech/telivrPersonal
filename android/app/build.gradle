@@ -15,16 +15,14 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-   signingConfigs {
+signingConfigs {
     release {
         if (project.hasProperty('KEYSTORE_FILE')) {
-            // Usa la propiedad tal cual, asumiendo que KEYSTORE_FILE se definirá como "my-release-key.jks"
             storeFile file(KEYSTORE_FILE)
             storePassword KEYSTORE_PASSWORD
             keyAlias KEY_ALIAS
             keyPassword KEY_PASSWORD
         } else {
-            // Configuración por defecto (debug)
             storeFile file('debug.keystore')
             storePassword 'android'
             keyAlias 'androiddebugkey'
