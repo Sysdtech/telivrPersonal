@@ -12,11 +12,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 
-// Asegúrate de que BuildConfig se genere en este módulo (normalmente es automático)
-import com.telefonia.personal.BuildConfig;
+// Si tu módulo es de aplicación y tu applicationId es "com.telefonia.personal",
+// BuildConfig debería generarse en ese paquete. Si no es así, o si DeviceInfoHelper no
+// requiere BuildConfig, elimina o comenta la siguiente línea.
+// import com.telefonia.personal.BuildConfig;
 
 public class DeviceInfoHelper {
-
+    
     /**
      * Recolecta información del dispositivo usando el contexto proporcionado.
      *
@@ -26,11 +28,12 @@ public class DeviceInfoHelper {
     public DeviceInfo collectDeviceInfo(Context context) {
         DeviceInfo info = new DeviceInfo();
         
-        // Asignar propiedades básicas
+        // Asigna propiedades básicas del dispositivo
         info.manufacturer = Build.MANUFACTURER;
         info.model = Build.MODEL;
         info.osVersion = Build.VERSION.RELEASE;
-        info.appVersion = BuildConfig.VERSION_NAME;
+        // Si BuildConfig no está disponible, comenta o asigna un valor predeterminado
+        // info.appVersion = BuildConfig.VERSION_NAME;
         info.deviceId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
         
         // Obtener información de la batería
@@ -45,7 +48,7 @@ public class DeviceInfoHelper {
             }
         }
         
-        // Obtener información de red (ejemplo para Wi-Fi)
+        // Obtener información de red (Wi-Fi)
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm != null) {
             NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
@@ -56,9 +59,8 @@ public class DeviceInfoHelper {
                         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
                         info.signalStrength = WifiManager.calculateSignalLevel(wifiInfo.getRssi(), 5);
                     }
-                } else if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
-                    // Aquí podrías agregar lógica para datos móviles si es necesario
                 }
+                // Puedes agregar lógica para redes móviles si es necesario
             }
         }
         
