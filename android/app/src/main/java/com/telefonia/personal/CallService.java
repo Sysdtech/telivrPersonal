@@ -101,8 +101,9 @@ public class CallService extends Service {
         createNotificationChannel();
         startForeground(NOTIFICATION_ID, createNotification("Servicio de telefonía activo"));
         
-        webSocketManager = WebSocketManager.getInstance();
-        webSocketManager.init(this);
+        webSocketManager = WebSocketManager.getInstance(this);
+
+
         
         Log.i(TAG, "CallService iniciado");
     }
