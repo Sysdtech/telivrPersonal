@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -24,32 +24,68 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Create app directory if not exists
+        run: mkdir -p android/app
 
-      - name: Set execute permissions for gradlew
+      - name: Decode and save keystore
         run: |
-          cd android
-          chmod +x gradlew
+          echo "$SIGNING_KEY" | base64 --decode > android/app/my-release-key.jks
+          ls -l android/app/my-release-key.jks  # Verifica que el archivo no esté vacío
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+
+      - name: Set up signing properties
+        run: |
+          # Definir KEYSTORE_FILE sin prefijo; se espera que el keystore esté en android/app/
+          echo "KEYSTORE_FILE=my-release-key.jks" >> android/gradle.properties
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }}" >> android/gradle.properties
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/gradle.properties
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/gradle.properties
+
+      - name: Clear Gradle Wrapper cache
+        run: rm -rf ~/.gradle/wrapper/dists/gradle-8.1.1-bin
 
       - name: Build with Gradle
-        run: ./gradlew assembleRelease
+        run: |
+          cd android
+          ./gradlew assembleRelease -PKEYSTORE_FILE=my-release-key.jks \
+            -PKEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }} \
+            -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} \
+            -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
+
+      - name: Find APK
+        id: find-apk
+        run: |
+          cd android
+          APK_PATH=$(find . -path "*/build/outputs/apk/release/*.apk" | head -n 1)
+          if [ -n "$APK_PATH" ]; then
+            echo "Found APK at $APK_PATH"
+            APK_DIR=$(dirname "$APK_PATH")
+            # Remover el prefijo "./" si existe
+            APK_DIR=${APK_DIR#./}
+            echo "apk_dir=$APK_DIR" >> $GITHUB_OUTPUT
+          else
+            echo "No APK found"
+            exit 1
+          fi
 
       - name: Sign APK
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
-          releaseDirectory: app/build/outputs/apk/release
+          releaseDirectory: android/${{ steps.find-apk.outputs.apk_dir }}
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: TelefoniaPersonal
           path: ${{ steps.sign_app.outputs.signedReleaseFile }}
 
-      - name: Create Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
