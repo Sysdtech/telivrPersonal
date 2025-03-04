@@ -4,6 +4,8 @@ plugins {
 }
 
 android {
+    namespace "com.telefonia.personal"  // Asegúrate de usar el nombre de tu paquete
+
     compileSdk 33
 
     defaultConfig {
