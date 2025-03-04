@@ -6,11 +6,11 @@ plugins {
 
 android {
     // Define el namespace (usado en Android Studio 4.2+)
-    namespace "com.franco.myapp" // Cambia según tu applicationId
+    namespace "com.telefonia.personal"
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.franco.myapp" // Debe coincidir con tu namespace
+        applicationId "com.telefonia.personal" // Debe coincidir con tu namespace
         minSdk 21
         targetSdk 34
         versionCode 1
