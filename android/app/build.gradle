@@ -47,5 +47,7 @@ dependencies {
     implementation 'com.karumi:dexter:6.2.3'  // Para permisos
     implementation 'org.java-websocket:Java-WebSocket:1.5.2'  // Para WebSocket
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'  // Para HTTP requests
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
 }
 
