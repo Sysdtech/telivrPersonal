@@ -1,0 +1,55 @@
+name: Build Android APK (telivrPersonal)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y unzip zip default-jdk
+
+      - name: Generate Keystore from Secret
+        run: |
+          echo "\"$SIGNING_KEY\"" | base64 --decode > telefoniaPersonal.keystore
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+
+      - name: Build APK
+        run: |
+          chmod +x create_apk.py
+          ./create_apk.py
+
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release
+          path: app-release.apk
+
+      - name: Copy APK to prebuilt directory
+        run: |
+          mkdir -p prebuilt/android
+          cp app-release.apk prebuilt/android/app-release.apk
+
+      - name: Commit and push APK
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add prebuilt/android/app-release.apk
+          git commit -m "Update prebuilt APK [skip ci]" || echo "No changes to commit"
+          git push
