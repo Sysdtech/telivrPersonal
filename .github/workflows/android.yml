@@ -1,92 +1,65 @@
-name: Build Android APK
+name: Build APK - Telefonía Personal
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main  # Ejecutar el flujo de trabajo cuando se haga push a la rama principal
   pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main  # También cuando se haga un PR a la rama principal
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Usamos un runner de Ubuntu
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      # Paso 1: Configuración de herramientas de Android SDK
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+          distribution: 'adoptopenjdk'  # Usamos AdoptOpenJDK
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v2
+        with:
+          api-level: 33  # Usamos Android 13 como SDK objetivo
+          build-tools: 33.0.0  # Herramientas de construcción
+          ndk: 21.4.7075529  # NDK si es necesario para bibliotecas nativas
 
-      - name: Decode and save keystore
+      # Paso 2: Clonar el repositorio
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      # Paso 3: Configuración de Gradle
+      - name: Set up Gradle Cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build APK with Gradle
         run: |
-          # Se decodifica el keystore y se guarda en android/app/my-release-key.jks
-          echo "$SIGNING_KEY" | base64 --decode > android/app/my-release-key.jks
-        env:
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          ./gradlew clean assembleRelease  # Limpiamos y compilamos la versión de release
 
-      - name: Set up signing properties
-        run: |
-          # En este caso KEYSTORE_FILE se define sin prefijo, ya que el build.gradle en android/app
-          # usará file(KEYSTORE_FILE) para buscar el archivo en el directorio actual (android/app)
-          echo "KEYSTORE_FILE=my-release-key.jks" >> android/gradle.properties
-          echo "KEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }}" >> android/gradle.properties
-          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/gradle.properties
-          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/gradle.properties
-
-      - name: Clear Gradle Wrapper cache
-        run: rm -rf ~/.gradle/wrapper/dists/gradle-8.1.1-bin
-
-      - name: Build with Gradle
-        run: |
-          cd android
-          ./gradlew assembleRelease -PKEYSTORE_FILE=my-release-key.jks \
-            -PKEYSTORE_PASSWORD=${{ secrets.KEY_STORE_PASSWORD }} \
-            -PKEY_ALIAS=${{ secrets.KEY_ALIAS }} \
-            -PKEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
-
-      - name: Find APK
-        id: find-apk
-        run: |
-          cd android
-          APK_PATH=$(find . -path "*/build/outputs/apk/release/*.apk" | head -n 1)
-          if [ -n "$APK_PATH" ]; then
-            echo "Found APK at $APK_PATH"
-            APK_DIR=$(dirname "$APK_PATH")
-            # Remover "./" si está presente
-            APK_DIR=${APK_DIR#./}
-            echo "apk_dir=$APK_DIR" >> $GITHUB_OUTPUT
-          else
-            echo "No APK found"
-            exit 1
-          fi
-
+      # Paso 4: Firma del APK
       - name: Sign APK
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: android/${{ steps.find-apk.outputs.apk_dir }}
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          KEYSTORE_PASSWORD=telefoniaPersonal123
+          KEY_ALIAS=telefoniakey
+          KEYSTORE_PATH=./keystore/telefoniaPersonal.keystore
+          APK_PATH=./app/build/outputs/apk/release/app-release-unsigned.apk
+          
+          # Firmar el APK
+          jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA-256 -keystore $KEYSTORE_PATH -storepass $KEYSTORE_PASSWORD -keypass $KEYSTORE_PASSWORD $APK_PATH $KEY_ALIAS
+          # Añadir APK alineado
+          zipalign -v 4 $APK_PATH ./app/build/outputs/apk/release/app-release-signed.apk
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+      # Paso 5: Subir el APK como artefacto
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
         with:
-          name: TelefoniaPersonal
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: ${{ steps.sign_app.outputs.signedReleaseFile }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: telefonia-personal-apk
+          path: ./app/build/outputs/apk/release/app-release-signed.apk
