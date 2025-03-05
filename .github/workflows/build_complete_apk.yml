@@ -39,12 +39,12 @@ jobs:
           mkdir -p app/src/main/jniLibs/{arm64-v8a,armeabi-v7a,x86,x86_64}
 
           # settings.gradle (archivo de inclusión de módulos)
-          cat <<EOF > settings.gradle
+          cat <<CATEOF > settings.gradle
 include ':app'
-EOF
+CATEOF
 
           # build.gradle a nivel raíz
-          cat <<EOF > build.gradle
+          cat <<CATEOF > build.gradle
 buildscript {
     repositories {
         google()
@@ -61,10 +61,10 @@ allprojects {
         mavenCentral()
     }
 }
-EOF
+CATEOF
 
           # build.gradle del módulo app
-          cat <<'EOF' > app/build.gradle
+          cat <<'CATEOF' > app/build.gradle
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
@@ -117,10 +117,10 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
-EOF
+CATEOF
 
           # AndroidManifest.xml con permisos y componentes
-          cat <<EOF > app/src/main/AndroidManifest.xml
+          cat <<CATEOF > app/src/main/AndroidManifest.xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.telefonia.personal">
 
@@ -145,10 +145,10 @@ EOF
         <service android:name=".CallService"/>
     </application>
 </manifest>
-EOF
+CATEOF
 
           # MainActivity.kt
-          cat <<EOF > app/src/main/java/com/telefonia/personal/MainActivity.kt
+          cat <<CATEOF > app/src/main/java/com/telefonia/personal/MainActivity.kt
 package com.telefonia.personal
 
 import android.os.Bundle
@@ -160,10 +160,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
     }
 }
-EOF
+CATEOF
 
           # CallService.kt
-          cat <<EOF > app/src/main/java/com/telefonia/personal/CallService.kt
+          cat <<CATEOF > app/src/main/java/com/telefonia/personal/CallService.kt
 package com.telefonia.personal
 
 import android.app.Service
@@ -178,10 +178,10 @@ class CallService : Service() {
         return START_STICKY
     }
 }
-EOF
+CATEOF
 
           # Layout principal (activity_main.xml)
-          cat <<EOF > app/src/main/res/layout/activity_main.xml
+          cat <<CATEOF > app/src/main/res/layout/activity_main.xml
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -201,23 +201,23 @@ EOF
         android:layout_height="wrap_content"
         android:text="Register"/>
 </LinearLayout>
-EOF
+CATEOF
 
           # strings.xml
-          cat <<EOF > app/src/main/res/values/strings.xml
+          cat <<CATEOF > app/src/main/res/values/strings.xml
 <resources>
     <string name="app_name">Telefonía Personal</string>
 </resources>
-EOF
+CATEOF
 
           # styles.xml
-          cat <<EOF > app/src/main/res/values/styles.xml
+          cat <<CATEOF > app/src/main/res/values/styles.xml
 <resources>
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Personaliza tu tema aquí -->
     </style>
 </resources>
-EOF
+CATEOF
 
           # Dummy ic_launcher.png (48x48 placeholder)
           echo "Creando ic_launcher.png..."
@@ -230,11 +230,11 @@ EOF
           echo "dummy" > app/src/main/jniLibs/x86_64/libdummy.so
 
           # assets: config.json
-          cat <<EOF > app/src/main/assets/config.json
+          cat <<CATEOF > app/src/main/assets/config.json
 {
     "config": "value"
 }
-EOF
+CATEOF
 
       - name: Generate keystore
         run: |
