@@ -1,71 +1,267 @@
-name: Build APK - Telefonía Personal
+name: Build Complete APK
 
 on:
   push:
-    branches:
-      - main  # Ejecutar el flujo de trabajo cuando se haga push a la rama principal
+    branches: [ main ]
   pull_request:
-    branches:
-      - main  # También cuando se haga un PR a la rama principal
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Usamos un runner de Ubuntu
-    
+    runs-on: ubuntu-latest
+
     steps:
-      # Paso 1: Configuración de herramientas de Android SDK
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
-          distribution: 'adoptopenjdk'  # Usamos AdoptOpenJDK
+          distribution: 'adoptopenjdk'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v2
         with:
-          api-level: 33  # Usamos Android 13 como SDK objetivo
-          build-tools: 33.0.0  # Herramientas de construcción
-          ndk: 21.4.7075529  # NDK si es necesario para bibliotecas nativas
+          api-level: 33
+          build-tools: 33.0.0
+          ndk: 21.4.7075529
 
-      # Paso 2: Clonar el repositorio
-      - name: Check out the repository
+      - name: Check out repository
         uses: actions/checkout@v3
 
-      # Paso 3: Configuración de Gradle
-      - name: Set up Gradle Cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Generate project structure and files
+        run: |
+          set -e
+          echo "Generando estructura de proyecto..."
+
+          # Crear directorios necesarios
+          mkdir -p app/src/main/java/com/telefonia/personal
+          mkdir -p app/src/main/res/{layout,values,drawable}
+          mkdir -p app/src/main/assets
+          mkdir -p app/src/main/jniLibs/{arm64-v8a,armeabi-v7a,x86,x86_64}
+
+          # settings.gradle (archivo de inclusión de módulos)
+          cat <<EOF > settings.gradle
+include ':app'
+EOF
+
+          # build.gradle a nivel raíz
+          cat <<EOF > build.gradle
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.0.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0"
+    }
+}
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+EOF
+
+          # build.gradle del módulo app
+          cat <<'EOF' > app/build.gradle
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    namespace "com.telefonia.personal"
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.telefonia.personal"
+        minSdk 24
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("../keystore/telefoniaPersonal.keystore")
+            storePassword "telefoniaPersonal123"
+            keyAlias "telefoniakey"
+            keyPassword "telefoniaPersonal123"
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.2'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'com.karumi:dexter:6.2.3'
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'androidx.activity:activity-ktx:1.7.0'
+    implementation 'androidx.core:core-ktx:1.9.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+EOF
+
+          # AndroidManifest.xml con permisos y componentes
+          cat <<EOF > app/src/main/AndroidManifest.xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.telefonia.personal">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.READ_CALL_LOG"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <application
+        android:label="Telefonía Personal"
+        android:icon="@drawable/ic_launcher">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <service android:name=".CallService"/>
+    </application>
+</manifest>
+EOF
+
+          # MainActivity.kt
+          cat <<EOF > app/src/main/java/com/telefonia/personal/MainActivity.kt
+package com.telefonia.personal
+
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+    }
+}
+EOF
+
+          # CallService.kt
+          cat <<EOF > app/src/main/java/com/telefonia/personal/CallService.kt
+package com.telefonia.personal
+
+import android.app.Service
+import android.content.Intent
+import android.os.IBinder
+
+class CallService : Service() {
+    override fun onBind(intent: Intent?) = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Lógica básica del servicio
+        return START_STICKY
+    }
+}
+EOF
+
+          # Layout principal (activity_main.xml)
+          cat <<EOF > app/src/main/res/layout/activity_main.xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <Button
+        android:id="@+id/btnLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Login"/>
+
+    <Button
+        android:id="@+id/btnRegister"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Register"/>
+</LinearLayout>
+EOF
+
+          # strings.xml
+          cat <<EOF > app/src/main/res/values/strings.xml
+<resources>
+    <string name="app_name">Telefonía Personal</string>
+</resources>
+EOF
+
+          # styles.xml
+          cat <<EOF > app/src/main/res/values/styles.xml
+<resources>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Personaliza tu tema aquí -->
+    </style>
+</resources>
+EOF
+
+          # Dummy ic_launcher.png (48x48 placeholder)
+          echo "Creando ic_launcher.png..."
+          echo "iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAIAAAC9H12FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAOElEQVRoge3BAQ0AAADCIPunNscwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4G2QAAWJHCkwAAAABJRU5ErkJggg==" | base64 -d > app/src/main/res/drawable/ic_launcher.png
+
+          # Crear archivos dummy para bibliotecas nativas
+          echo "dummy" > app/src/main/jniLibs/arm64-v8a/libdummy.so
+          echo "dummy" > app/src/main/jniLibs/armeabi-v7a/libdummy.so
+          echo "dummy" > app/src/main/jniLibs/x86/libdummy.so
+          echo "dummy" > app/src/main/jniLibs/x86_64/libdummy.so
+
+          # assets: config.json
+          cat <<EOF > app/src/main/assets/config.json
+{
+    "config": "value"
+}
+EOF
+
+      - name: Generate keystore
+        run: |
+          echo "Generando keystore..."
+          mkdir -p keystore
+          keytool -genkey -v -keystore keystore/telefoniaPersonal.keystore -storepass telefoniaPersonal123 -alias telefoniakey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Telefonia Personal, OU=Dev, O=MyCompany, L=City, S=State, C=ES"
+
+      - name: Generate Gradle Wrapper
+        run: |
+          ./gradlew wrapper
 
       - name: Build APK with Gradle
         run: |
-          ./gradlew clean assembleRelease  # Limpiamos y compilamos la versión de release
+          ./gradlew clean assembleRelease
 
-      # Paso 4: Verifica si el archivo APK fue generado
-      - name: Check if APK is generated
-        run: |
-          ls ./app/build/outputs/apk/release  # Verificar que el archivo APK esté en la ruta correcta
-          ls ./app/build/outputs/apk/release/app-release-signed.apk  # Confirmar que el APK firmado está allí
-
-      # Paso 5: Firma del APK
       - name: Sign APK
         run: |
+          echo "Firmando APK..."
           KEYSTORE_PASSWORD=telefoniaPersonal123
           KEY_ALIAS=telefoniakey
-          KEYSTORE_PATH=./keystore/telefoniaPersonal.keystore
-          APK_PATH=./app/build/outputs/apk/release/app-release-unsigned.apk
-          
-          # Firmar el APK
+          KEYSTORE_PATH=keystore/telefoniaPersonal.keystore
+          APK_PATH=app/build/outputs/apk/release/app-release-unsigned.apk
           jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA-256 -keystore $KEYSTORE_PATH -storepass $KEYSTORE_PASSWORD -keypass $KEYSTORE_PASSWORD $APK_PATH $KEY_ALIAS
-          # Añadir APK alineado
-          zipalign -v 4 $APK_PATH ./app/build/outputs/apk/release/app-release-signed.apk
+          zipalign -v 4 $APK_PATH app/build/outputs/apk/release/app-release-signed.apk
 
-      # Paso 6: Subir el APK como artefacto
-      - name: Upload APK as an artifact
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: telefonia-personal-apk  # Nombre del artefacto
-          path: ./app/build/outputs/apk/release/app-release-signed.apk  # Ruta del archivo APK generado y firmado
+          name: telefonia-personal-apk
+          path: app/build/outputs/apk/release/app-release-signed.apk
