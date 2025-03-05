@@ -17,9 +17,19 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            storeFile file("keystore/telefoniaPersonal.keystore") // Ruta del keystore
+            storePassword "telefoniaPersonal123" // Contraseña del keystore
+            keyAlias "telefoniakey" // Alias de la clave
+            keyPassword "telefoniaPersonal123" // Contraseña de la clave
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            signingConfig signingConfigs.release // Asocia la configuración de firma
+            minifyEnabled false // Puedes habilitar minificación si es necesario
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
