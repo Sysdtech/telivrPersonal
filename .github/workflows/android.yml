@@ -44,7 +44,13 @@ jobs:
         run: |
           ./gradlew clean assembleRelease  # Limpiamos y compilamos la versión de release
 
-      # Paso 4: Firma del APK
+      # Paso 4: Verifica si el archivo APK fue generado
+      - name: Check if APK is generated
+        run: |
+          ls ./app/build/outputs/apk/release  # Verificar que el archivo APK esté en la ruta correcta
+          ls ./app/build/outputs/apk/release/app-release-signed.apk  # Confirmar que el APK firmado está allí
+
+      # Paso 5: Firma del APK
       - name: Sign APK
         run: |
           KEYSTORE_PASSWORD=telefoniaPersonal123
@@ -57,7 +63,7 @@ jobs:
           # Añadir APK alineado
           zipalign -v 4 $APK_PATH ./app/build/outputs/apk/release/app-release-signed.apk
 
-      # Paso 5: Subir el APK como artefacto
+      # Paso 6: Subir el APK como artefacto
       - name: Upload APK as an artifact
         uses: actions/upload-artifact@v3
         with:
